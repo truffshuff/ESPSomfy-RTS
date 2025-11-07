@@ -1818,8 +1818,9 @@ void Web::begin() {
             SomfyShade* shade = somfy.getShadeById(obj["shadeId"]);
             if (shade) {
               if (obj.containsKey("remoteAddress")) {
-                if (obj.containsKey("rollingCode")) shade->linkRemote(obj["remoteAddress"], obj["rollingCode"]);
-                else shade->linkRemote(obj["remoteAddress"]);
+                uint8_t bitLength = obj.containsKey("bitLength") ? obj["bitLength"].as<uint8_t>() : 0;
+                if (obj.containsKey("rollingCode")) shade->linkRemote(obj["remoteAddress"], obj["rollingCode"], bitLength);
+                else shade->linkRemote(obj["remoteAddress"], 0, bitLength);
               }
               else {
                 server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Remote address not provided.\"}"));

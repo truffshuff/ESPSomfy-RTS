@@ -715,12 +715,15 @@ void SomfyGroup::clear() {
   this->name[0] = 0x00;
   memset(&this->linkedShades, 0x00, sizeof(this->linkedShades));
 }
-bool SomfyShade::linkRemote(uint32_t address, uint16_t rollingCode) {
+bool SomfyShade::linkRemote(uint32_t address, uint16_t rollingCode, uint8_t bitLength) {
   // Check to see if the remote is already linked. If it is
-  // just return true after setting the rolling code
+  // just return true after setting the rolling code and bitLength
   for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
     if(this->linkedRemotes[i].getRemoteAddress() == address) {
       this->linkedRemotes[i].setRollingCode(rollingCode);
+      if(bitLength != 0) this->linkedRemotes[i].bitLength = bitLength;
+      // If bitLength not specified and current is 0, inherit from shade
+      else if(this->linkedRemotes[i].bitLength == 0) this->linkedRemotes[i].bitLength = this->bitLength;
       return true;
     }
   }
@@ -728,6 +731,9 @@ bool SomfyShade::linkRemote(uint32_t address, uint16_t rollingCode) {
     if(this->linkedRemotes[i].getRemoteAddress() == 0) {
       this->linkedRemotes[i].setRemoteAddress(address);
       this->linkedRemotes[i].setRollingCode(rollingCode);
+      // Set bitLength: use provided value, or inherit from shade
+      if(bitLength != 0) this->linkedRemotes[i].bitLength = bitLength;
+      else this->linkedRemotes[i].bitLength = this->bitLength;
       #ifdef USE_NVS
       if(somfy.useNVS()) {
         uint32_t linkedAddresses[SOMFY_MAX_LINKED_REMOTES];
@@ -3547,6 +3553,7 @@ bool SomfyGroup::toJSON(JsonObject &obj) {
 void SomfyRemote::toJSON(JsonResponse &json) {
   json.addElem("remoteAddress", (uint32_t)this->getRemoteAddress());
   json.addElem("lastRollingCode", (uint32_t)this->lastRollingCode);
+  json.addElem("bitLength", this->bitLength);
 }
 /*
 bool SomfyRemote::toJSON(JsonObject &obj) {

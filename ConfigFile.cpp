@@ -7,9 +7,9 @@
 
 extern Preferences pref;
 
-#define SHADE_HDR_VER 24
+#define SHADE_HDR_VER 25
 #define SHADE_HDR_SIZE 76
-#define SHADE_REC_SIZE 276
+#define SHADE_REC_SIZE 283
 #define GROUP_REC_SIZE 200
 #define TRANS_REC_SIZE 74
 #define ROOM_REC_SIZE 29
@@ -803,6 +803,18 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
   for(uint8_t j = 0; j < SOMFY_MAX_LINKED_REMOTES; j++) {
     SomfyLinkedRemote *rem = &shade->linkedRemotes[j];
     rem->setRemoteAddress(this->readUInt32(0));
+    // Version 25: Load bitLength for each linked remote
+    if(this->header.version >= 25) {
+      rem->bitLength = this->readUInt8(0);
+      // If bitLength is 0, inherit from shade's bitLength
+      if(rem->bitLength == 0 && rem->getRemoteAddress() != 0) {
+        rem->bitLength = shade->bitLength;
+      }
+    }
+    else {
+      // For older versions, inherit shade's bitLength for all linked remotes
+      rem->bitLength = shade->bitLength;
+    }
     if(rem->getRemoteAddress() != 0) rem->lastRollingCode = pref.getUShort(rem->getRemotePrefId(), 0);
     if(this->header.version < 5 && j == 4) break; // Prior to version 5 we only supported 5 linked remotes.
   }
@@ -972,6 +984,8 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   for(uint8_t j = 0; j < SOMFY_MAX_LINKED_REMOTES; j++) {
     SomfyLinkedRemote *rem = &shade->linkedRemotes[j];
     this->writeUInt32(rem->getRemoteAddress());
+    // Version 25: Store bitLength for each linked remote
+    this->writeUInt8(rem->bitLength);
   }
   this->writeUInt16(shade->lastRollingCode);
   if(shade->getShadeId() != 255) {
