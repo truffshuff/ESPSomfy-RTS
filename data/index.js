@@ -1454,7 +1454,21 @@ class General {
             }
         });
     }
-    setAppVersion() { document.getElementById('spanAppVersion').innerText = this.appVersion; }
+    setAppVersion() {
+        try {
+            let val = this.appVersion || '';
+            if(!val || val.length === 0) {
+                // fallback to fwVersion element if available
+                let fw = document.getElementById('spanFwVersion');
+                if(fw) val = fw.innerText || '';
+            }
+            // ensure leading 'v'
+            if(val && val.length && val.charAt(0) !== 'v') val = 'v' + val;
+            document.getElementById('spanAppVersion').innerText = val;
+        } catch (e) {
+            console.log('setAppVersion error', e);
+        }
+    }
     setTimeZones() {
         let dd = document.getElementById('selTimeZone');
         dd.length = 0;
