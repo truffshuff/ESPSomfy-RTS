@@ -2486,6 +2486,18 @@ void Web::begin() {
     resp.beginResponse(&server, g_content, sizeof(g_content));
     resp.beginObject();
     resp.addElem("fwVersion", settings.fwVersion.name);
+    // Add a formatted application version string for the UI (prefix with 'v' if needed)
+    char appverbuf[16];
+    if(strlen(settings.appVersion.name) > 0) {
+      if(settings.appVersion.name[0] == 'v') strlcpy(appverbuf, settings.appVersion.name, sizeof(appverbuf));
+      else snprintf(appverbuf, sizeof(appverbuf), "v%s", settings.appVersion.name);
+    }
+    else {
+      // fallback to numeric parts
+      if(settings.appVersion.suffix[0]) snprintf(appverbuf, sizeof(appverbuf), "v%u.%u.%u%s", settings.appVersion.major, settings.appVersion.minor, settings.appVersion.build, settings.appVersion.suffix);
+      else snprintf(appverbuf, sizeof(appverbuf), "v%u.%u.%u", settings.appVersion.major, settings.appVersion.minor, settings.appVersion.build);
+    }
+    resp.addElem("appVersion", appverbuf);
     settings.toJSON(resp);
     settings.NTP.toJSON(resp);
     resp.endObject();
