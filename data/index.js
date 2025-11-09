@@ -1270,7 +1270,8 @@ var security = new Security();
 
 class General {
     initialized = false; 
-    appVersion = 'v2.4.7';
+    // default value kept empty; will be populated from device on /controller or fwStatus socket
+    appVersion = '';
     reloadApp = false;
     init() {
         if (this.initialized) return;
@@ -1983,7 +1984,20 @@ class Somfy {
                 this.setShadesList(somfy.shades);
                 this.setGroupsList(somfy.groups);
                 this.setRepeaterList(somfy.repeaters);
-                if (typeof somfy.version !== 'undefined') firmware.procFwStatus(somfy.version);
+                if (typeof somfy.version !== 'undefined') {
+                    // somfy.version comes from /controller -> version (which includes appVersion object)
+                    firmware.procFwStatus(somfy.version);
+                    // If the server provided an appVersion object, use it to populate the UI appVersion
+                    if (typeof somfy.version.appVersion !== 'undefined') {
+                        let av = somfy.version.appVersion;
+                        // build a display string similar to server's fwVersion (name) style
+                        if (typeof av.name !== 'undefined' && av.name && av.name.length) general.appVersion = av.name;
+                        else if (typeof av.major !== 'undefined') {
+                            general.appVersion = 'v' + av.major + '.' + av.minor + '.' + av.build + (av.suffix ? av.suffix : '');
+                        }
+                        general.setAppVersion();
+                    }
+                }
             }
         });
     }
@@ -4392,6 +4406,15 @@ class Firmware {
     procFwStatus(rel) {
         console.log(rel);
         let div = document.getElementById('divFirmwareUpdate');
+        // If the server sent an appVersion object, use it to set the UI appVersion
+        if (typeof rel.appVersion !== 'undefined') {
+            let av = rel.appVersion;
+            if (typeof av.name !== 'undefined' && av.name && av.name.length) general.appVersion = av.name;
+            else if (typeof av.major !== 'undefined') {
+                general.appVersion = 'v' + av.major + '.' + av.minor + '.' + av.build + (av.suffix ? av.suffix : '');
+            }
+            general.setAppVersion();
+        }
         if (rel.available && rel.status === 0 && rel.checkForUpdate !== false) {
             div.style.color = 'black';
             div.innerHTML = `<span>Firmware ${rel.fwVersion.name} Installed<span><span style="color:red"> ${rel.latest.name} Available</span>`;
