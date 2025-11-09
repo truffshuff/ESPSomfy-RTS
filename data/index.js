@@ -1417,8 +1417,14 @@ class General {
                 document.getElementById('spanFwVersion').innerText = settings.fwVersion;
                 document.getElementById('spanHwVersion').innerText = settings.chipModel.length > 0 ? '-' + settings.chipModel : '';
                 document.getElementById('divContainer').setAttribute('data-chipmodel', settings.chipModel);
+                // If server provided an appVersion string (from /modulesettings) use it to populate the Application field
+                if (settings.appVersion && settings.appVersion.length) {
+                    document.getElementById('spanAppVersion').innerText = settings.appVersion;
+                    general.appVersion = settings.appVersion;
+                } else {
+                    general.setAppVersion();
+                }
                 somfy.initPins();
-                general.setAppVersion();
                 ui.toElement(pnl, { general: settings });
             }
         });
