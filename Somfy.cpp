@@ -566,7 +566,10 @@ bool SomfyShadeController::loadLegacy() {
 bool SomfyShadeController::begin() {
   // Load up all the configuration data.
   //ShadeConfigFile::getAppVersion(this->appVersion);
-  Serial.printf("App Version:%u.%u.%u\n", settings.appVersion.major, settings.appVersion.minor, settings.appVersion.build);
+  if(settings.appVersion.suffix[0])
+    Serial.printf("App Version:%u.%u.%u%s\n", settings.appVersion.major, settings.appVersion.minor, settings.appVersion.build, settings.appVersion.suffix);
+  else
+    Serial.printf("App Version:%u.%u.%u\n", settings.appVersion.major, settings.appVersion.minor, settings.appVersion.build);
   #ifdef USE_NVS
   if(!this->useNVS()) {  // At 1.4 we started using the configuration file.  If the file doesn't exist then booh.
     // We need to remove all the extraeneous data from NVS for the shades.  From here on out we
