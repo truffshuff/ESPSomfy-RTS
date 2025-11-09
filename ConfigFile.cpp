@@ -434,6 +434,10 @@ bool ShadeConfigFile::validate() {
   }
   if(this->file.size() != fsize) {
     Serial.printf("File size is not correct should be %d and got %d\n", fsize, this->file.size());
+    // Don't fail immediately - try to be backward compatible with older/modified
+    // backups where the recorded header sizes may not match the actual data
+    // layout on disk. We'll continue and attempt to detect the real record
+    // sizes below when iterating the records.
   }
   // Next check to see if the records match the header length.
   uint8_t recs = 0;
@@ -445,9 +449,11 @@ bool ShadeConfigFile::validate() {
         Serial.printf("Failed to find the room record end %d\n", recs);
         return false;
       }
-      if(this->file.position() - pos != this->header.roomRecordSize) {
-        Serial.printf("Room record length is %d and should be %d\n", this->file.position() - pos, this->header.roomRecordSize);
-        return false;
+      uint32_t observed = this->file.position() - pos;
+      if(observed != this->header.roomRecordSize) {
+        Serial.printf("Room record length is %d and should be %d - adjusting for compatibility\n", observed, this->header.roomRecordSize);
+        // Adopt the observed size to allow loading older/modified backups.
+        this->header.roomRecordSize = observed;
       }
       recs++;
     }
@@ -459,9 +465,12 @@ bool ShadeConfigFile::validate() {
       Serial.printf("Failed to find the shade record end %d\n", recs);
       return false;
     }
-    if(this->file.position() - pos != this->header.shadeRecordSize) {
-      Serial.printf("Shade record length is %d and should be %d\n", this->file.position() - pos, this->header.shadeRecordSize);
-      return false;
+    uint32_t observed = this->file.position() - pos;
+    if(observed != this->header.shadeRecordSize) {
+      Serial.printf("Shade record length is %d and should be %d - adjusting for compatibility\n", observed, this->header.shadeRecordSize);
+      // Adopt the observed size so subsequent parsing and file size
+      // calculations match the on-disk file and allow restore.
+      this->header.shadeRecordSize = observed;
     }
     recs++;
   }
@@ -473,11 +482,12 @@ bool ShadeConfigFile::validate() {
         Serial.printf("Failed to find the group record end %d\n", recs);
         return false;
       }
-      recs++;
-      if(this->file.position() - pos != this->header.groupRecordSize) {
-        Serial.printf("Group record length is %d and should be %d\n", this->file.position() - pos, this->header.groupRecordSize);
-        return false;
+      uint32_t observed = this->file.position() - pos;
+      if(observed != this->header.groupRecordSize) {
+        Serial.printf("Group record length is %d and should be %d - adjusting for compatibility\n", observed, this->header.groupRecordSize);
+        this->header.groupRecordSize = observed;
       }
+      recs++;
     }
   }
   if(this->header.version >= 21) {
