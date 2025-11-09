@@ -75,7 +75,8 @@ void appver_t::parse(const char *ver) {
       break;
   }
   this->build = static_cast<uint8_t>(atoi(num) & 0xFF);
-  if(strlen(ver) < i) strlcpy(this->suffix, &ver[i], sizeof(this->suffix));
+  // If there are remaining characters after the numeric build index, treat them as the suffix
+  if(strlen(ver) > i) strlcpy(this->suffix, &ver[i], sizeof(this->suffix));
 }
 bool appver_t::toJSON(JsonObject &obj) {
   obj["name"] = this->name;
