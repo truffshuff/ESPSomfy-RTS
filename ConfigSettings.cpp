@@ -68,11 +68,10 @@ void appver_t::parse(const char *ver) {
   memset(num, 0x00, sizeof(num));
   for(uint8_t j = 0; j < 3 && i < strlen(ver);) {
     char ch = ver[i++];
-    if(!isdigit(ch)) break;
-    if(ch != '.')
-      num[j++] = ch;
-    else
-      break;
+    // If we hit a non-digit (e.g. a suffix character) back up the index
+    // so the suffix starts at this character and isn't skipped.
+    if(!isdigit(ch)) { i--; break; }
+    num[j++] = ch;
   }
   this->build = static_cast<uint8_t>(atoi(num) & 0xFF);
   // If there are remaining characters after the numeric build index, treat them as the suffix

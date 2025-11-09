@@ -35,6 +35,8 @@ void setup() {
   webServer.begin();
   delay(1000);
   net.setup();  
+  // Debug: show appVersion just before Somfy initialization
+  Serial.printf("Pre-Somfy App Version name:'%s' suffix:'%c' (0x%02X)\n", settings.appVersion.name, settings.appVersion.suffix[0] ? settings.appVersion.suffix[0] : ' ', settings.appVersion.suffix[0]);
   somfy.begin();
   //git.checkForUpdate();
   esp_task_wdt_init(7, true); //enable panic so ESP32 restarts
