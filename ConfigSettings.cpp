@@ -230,6 +230,8 @@ bool ConfigSettings::getAppVersion() {
   f.read((uint8_t *)app, sizeof(app) - 1);
   f.close();
   _trim(app);
+  // Debug: print the raw appversion string read from LittleFS so we can verify what's being parsed
+  Serial.printf("Read /appversion: '%s'\n", app);
   this->appVersion.parse(app);
   return true;
 }
